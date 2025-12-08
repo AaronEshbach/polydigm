@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Polydigm.Errors/Polydigm.Errors.csproj" />
+  <Project Path="Polydigm.Metadata.Abstractions/Polydigm.Metadata.Abstractions.csproj" />
+  <Project Path="Polydigm.Validation.Abstractions/Polydigm.Validation.Abstractions.csproj" />
+  <Project Path="Polydigm.Validation.Tests/Polydigm.Validation.Tests.csproj" />
+  <Project Path="Polydigm.Validation/Polydigm.Validation.csproj" />
+</Solution>
