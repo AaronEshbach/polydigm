@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<!-- Global tool configuration -->
+		<PackAsTool>true</PackAsTool>
+		<ToolCommandName>polydigm</ToolCommandName>
+		<PackageId>Polydigm.CodeGen.Tool</PackageId>
+		<Version>0.1.0</Version>
+		<Authors>Polydigm</Authors>
+		<Description>Code generation tool for Polydigm validated models from OpenAPI specifications</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Polydigm.Metadata\Polydigm.Metadata.csproj" />
+		<ProjectReference Include="..\Polydigm.Specifications.OpenApi\Polydigm.Specifications.OpenApi.csproj" />
+		<ProjectReference Include="..\Polydigm.CodeGeneration.CSharp\Polydigm.CodeGeneration.CSharp.csproj" />
+	</ItemGroup>
+
+</Project>

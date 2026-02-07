@@ -1,0 +1,71 @@
+openapi: 3.0.3
+info:
+  title: Sample Pet Store API
+  version: 1.0.0
+  description: A sample API to demonstrate Polydigm code generation
+
+paths: {}
+
+components:
+  schemas:
+    PetId:
+      type: string
+      pattern: ^PET-[0-9]{6}$
+      description: Unique identifier for a pet
+
+    PetName:
+      type: string
+      maxLength: 50
+      description: Name of the pet
+
+    PetAge:
+      type: integer
+      minimum: 0
+      maximum: 50
+      description: Age of the pet in years
+
+    PetType:
+      type: string
+      enum: [Dog, Cat, Bird, Fish]
+      description: Type of pet
+
+    Pet:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          $ref: '#/components/schemas/PetId'
+        name:
+          $ref: '#/components/schemas/PetName'
+        type:
+          $ref: '#/components/schemas/PetType'
+        age:
+          $ref: '#/components/schemas/PetAge'
+      description: A pet in the store
+
+    Email:
+      type: string
+      pattern: ^[^@]+@[^@]+\.[^@]+$
+      description: Email address
+
+    OwnerId:
+      type: string
+      pattern: ^OWN-[0-9]{6}$
+      description: Unique identifier for an owner
+
+    Owner:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          $ref: '#/components/schemas/OwnerId'
+        email:
+          $ref: '#/components/schemas/Email'
+        name:
+          $ref: '#/components/schemas/PetName'
+      description: Owner of a pet
