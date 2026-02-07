@@ -45,4 +45,43 @@ namespace Polydigm.Metadata
             return GetPatternOfRegex(regexInstance) ?? throw new ArgumentException("The provided field does not contain a valid Regex instance.", nameof(field));
         }
     }
+
+    [AttributeUsage(AttributeTargets.Enum, Inherited = false, AllowMultiple = false)]
+    public class EnumAttribute : ValidationAttributeBase
+    {
+        public static IEnumerable<string> GetEnumMemberNames(Type enumType)
+        {
+            if (!enumType.IsEnum)
+            {
+                throw new ArgumentException("The provided type is not an enum.", nameof(enumType));
+            }
+
+            return Enum.GetNames(enumType);
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public class MinLengthAttribute : ValidationAttributeBase
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public class MaxLengthAttribute : ValidationAttributeBase
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public class MinimumAttribute : ValidationAttributeBase
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public class MaximumAttribute : ValidationAttributeBase
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public class RequiredAttribute : ValidationAttributeBase
+    {
+    }
 }

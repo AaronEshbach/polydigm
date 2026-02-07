@@ -234,9 +234,9 @@ namespace Polydigm.Metadata
             }
 
             // Default convention: look for "TryCreate"
-            if (type.GetMethod("TryCreate", BindingFlags.Static | BindingFlags.Public) != null)
+            if (type.GetMethod("Create", BindingFlags.Static | BindingFlags.Public) != null)
             {
-                return "TryCreate";
+                return "Create";
             }
 
             return null;

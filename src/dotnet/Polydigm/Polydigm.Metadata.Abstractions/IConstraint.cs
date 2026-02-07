@@ -41,4 +41,9 @@ namespace Polydigm.Metadata
     {
         Regex Pattern { get; }
     }
+
+    public interface IEnumConstraint : IConstraint
+    {
+        IEnumerable<string> AllowedValues { get; }
+    }
 }
