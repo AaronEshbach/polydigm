@@ -1,11 +1,14 @@
-﻿using System.Text.RegularExpressions;
+﻿using Polydigm.Metadata;
+using System.Text.RegularExpressions;
 
 namespace Polydigm.Validation.Tests
 {
     [Validated]
     public readonly record struct TestId
     {
+        [Pattern]
         private static readonly Regex Pattern = new(@"^[a-zA-Z0-9]{6}-[a-zA-Z0-9]{6}$", RegexOptions.Compiled);
+
         private readonly string value;
 
         public string Value => value;
