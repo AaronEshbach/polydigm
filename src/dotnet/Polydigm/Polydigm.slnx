@@ -1,10 +1,18 @@
 <Solution>
+  <Project Path="Polydigm.Authorization.Abstractions/Polydigm.Authorization.Abstractions.csproj" />
+  <Project Path="Polydigm.CodeGen.Tool/Polydigm.CodeGen.Tool.csproj" />
   <Project Path="Polydigm.CodeGeneration.Abstractions/Polydigm.CodeGeneration.Abstractions.csproj" />
+  <Project Path="Polydigm.CodeGeneration.CSharp/Polydigm.CodeGeneration.CSharp.csproj" />
   <Project Path="Polydigm.Errors/Polydigm.Errors.csproj" />
+  <Project Path="Polydigm.Logging.Abstractions/Polydigm.Logging.Abstractions.csproj" />
   <Project Path="Polydigm.Metadata.Abstractions/Polydigm.Metadata.Abstractions.csproj" />
   <Project Path="Polydigm.Metadata/Polydigm.Metadata.csproj" />
+  <Project Path="Polydigm.Pipeline.Abstractions/Polydigm.Pipeline.Abstractions.csproj" />
+  <Project Path="Polydigm.Routing.Abstractions/Polydigm.Routing.Abstractions.csproj" />
+  <Project Path="Polydigm.Serialization.Abstractions/Polydigm.Serialization.Abstractions.csproj" />
   <Project Path="Polydigm.Specifications.Abstractions/Polydigm.Specifications.Abstractions.csproj" />
   <Project Path="Polydigm.Specifications.OpenApi/Polydigm.Specifications.OpenApi.csproj" />
+  <Project Path="Polydigm.Telemetry.Abstractions/Polydigm.Telemetry.Abstractions.csproj" />
   <Project Path="Polydigm.Validation.Abstractions/Polydigm.Validation.Abstractions.csproj" />
   <Project Path="Polydigm.Validation.Tests/Polydigm.Validation.Tests.csproj" />
   <Project Path="Polydigm.Validation/Polydigm.Validation.csproj" />

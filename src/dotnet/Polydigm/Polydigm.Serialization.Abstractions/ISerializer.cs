@@ -1,4 +1,4 @@
-namespace Polydigm.Execution
+namespace Polydigm.Serialization
 {
     /// <summary>
     /// Handles serialization and deserialization of data between transport layer and application layer.

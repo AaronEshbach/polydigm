@@ -1,6 +1,6 @@
 using Polydigm.Metadata;
 
-namespace Polydigm.Execution
+namespace Polydigm.Pipeline
 {
     /// <summary>
     /// Represents the execution context for a single request flowing through the pipeline.

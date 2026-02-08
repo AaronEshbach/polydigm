@@ -1,4 +1,4 @@
-namespace Polydigm.Execution
+namespace Polydigm.Pipeline
 {
     /// <summary>
     /// Validates DTOs and converts them to validated domain models.

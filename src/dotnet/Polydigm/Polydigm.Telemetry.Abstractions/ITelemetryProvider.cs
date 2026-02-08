@@ -1,4 +1,6 @@
-namespace Polydigm.Execution
+using Polydigm.Pipeline;
+
+namespace Polydigm.Telemetry
 {
     /// <summary>
     /// Handles telemetry, tracing, and metrics collection.

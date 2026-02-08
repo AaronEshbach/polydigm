@@ -1,4 +1,6 @@
-namespace Polydigm.Execution
+using Polydigm.Pipeline;
+
+namespace Polydigm.Logging
 {
     /// <summary>
     /// Handles request and response logging/auditing.

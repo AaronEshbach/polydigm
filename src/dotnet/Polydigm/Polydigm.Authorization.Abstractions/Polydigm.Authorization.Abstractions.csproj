@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net10.0;netstandard2.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Polydigm.Metadata.Abstractions\Polydigm.Metadata.Abstractions.csproj" />
+		<ProjectReference Include="..\Polydigm.Pipeline.Abstractions\Polydigm.Pipeline.Abstractions.csproj" />
+	</ItemGroup>
+
+</Project>

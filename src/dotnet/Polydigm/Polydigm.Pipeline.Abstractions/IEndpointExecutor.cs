@@ -1,6 +1,6 @@
 using Polydigm.Metadata;
 
-namespace Polydigm.Execution
+namespace Polydigm.Pipeline
 {
     /// <summary>
     /// Executes endpoint handlers with validated input.

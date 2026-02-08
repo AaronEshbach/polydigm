@@ -1,6 +1,7 @@
 using Polydigm.Metadata;
+using Polydigm.Pipeline;
 
-namespace Polydigm.Execution
+namespace Polydigm.Routing
 {
     /// <summary>
     /// Routes requests to the appropriate endpoint based on the execution context.

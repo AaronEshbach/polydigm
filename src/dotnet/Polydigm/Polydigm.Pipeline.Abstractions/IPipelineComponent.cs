@@ -1,4 +1,4 @@
-namespace Polydigm.Execution
+namespace Polydigm.Pipeline
 {
     /// <summary>
     /// Represents a component in the execution pipeline.
