@@ -4,7 +4,150 @@ info:
   version: 1.0.0
   description: A sample API to demonstrate Polydigm code generation
 
-paths: {}
+paths:
+  /pets:
+    get:
+      operationId: ListPets
+      summary: List all pets
+      description: Retrieves a list of all pets in the store
+      tags:
+        - pets
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of pets to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: A list of pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+    post:
+      operationId: CreatePet
+      summary: Create a new pet
+      description: Adds a new pet to the store
+      tags:
+        - pets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '201':
+          description: Pet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '400':
+          description: Invalid input
+
+  /pets/{petId}:
+    get:
+      operationId: GetPet
+      summary: Get a pet by ID
+      description: Retrieves a specific pet by its unique identifier
+      tags:
+        - pets
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          description: The ID of the pet to retrieve
+          schema:
+            $ref: '#/components/schemas/PetId'
+      responses:
+        '200':
+          description: Pet found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '404':
+          description: Pet not found
+    put:
+      operationId: UpdatePet
+      summary: Update a pet
+      description: Updates an existing pet's information
+      tags:
+        - pets
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          description: The ID of the pet to update
+          schema:
+            $ref: '#/components/schemas/PetId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '200':
+          description: Pet updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '404':
+          description: Pet not found
+        '400':
+          description: Invalid input
+    delete:
+      operationId: DeletePet
+      summary: Delete a pet
+      description: Removes a pet from the store
+      tags:
+        - pets
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          description: The ID of the pet to delete
+          schema:
+            $ref: '#/components/schemas/PetId'
+      responses:
+        '204':
+          description: Pet deleted successfully
+        '404':
+          description: Pet not found
+
+  /owners/{ownerId}:
+    get:
+      operationId: GetOwner
+      summary: Get an owner by ID
+      description: Retrieves a specific owner by their unique identifier
+      tags:
+        - owners
+      parameters:
+        - name: ownerId
+          in: path
+          required: true
+          description: The ID of the owner to retrieve
+          schema:
+            $ref: '#/components/schemas/OwnerId'
+      responses:
+        '200':
+          description: Owner found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Owner'
+        '404':
+          description: Owner not found
 
 components:
   schemas:

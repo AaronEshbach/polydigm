@@ -50,11 +50,56 @@ namespace Polydigm.Specifications.OpenApi
             return models;
         }
 
+        public IEnumerable<IEndpointMetadata> ExtractEndpoints(OpenApiDocument specification)
+        {
+            var endpoints = new List<IEndpointMetadata>();
+
+            if (specification.Paths == null)
+                return endpoints;
+
+            foreach (var path in specification.Paths)
+            {
+                foreach (var operation in path.Value.Operations)
+                {
+                    var endpoint = ExtractEndpoint(path.Key, operation.Key, operation.Value, specification);
+                    if (endpoint != null)
+                    {
+                        endpoints.Add(endpoint);
+                    }
+                }
+            }
+
+            return endpoints;
+        }
+
+        public IServiceMetadata ExtractServiceMetadata(OpenApiDocument specification)
+        {
+            var dataTypes = ExtractDataTypes(specification).ToList();
+            var models = ExtractModels(specification).ToList();
+            var endpoints = ExtractEndpoints(specification).ToList();
+
+            return new ServiceMetadata
+            {
+                Name = specification.Info?.Title ?? "Unnamed Service",
+                Version = specification.Info?.Version,
+                Description = specification.Info?.Description,
+                DataTypes = dataTypes,
+                Models = models,
+                Endpoints = endpoints,
+                Extensions = new Dictionary<string, object>
+                {
+                    ["openapi-version"] = specification.Info?.Version ?? "unknown",
+                    ["base-path"] = specification.Servers?.FirstOrDefault()?.Url ?? ""
+                }
+            };
+        }
+
         public MetadataExtractionResult ExtractAll(OpenApiDocument specification)
         {
             var warnings = new List<string>();
             var dataTypes = new List<IDataType>();
             var models = new List<IModelMetadata>();
+            var endpoints = new List<IEndpointMetadata>();
 
             if (specification.Components?.Schemas != null)
             {
@@ -86,10 +131,45 @@ namespace Polydigm.Specifications.OpenApi
                 }
             }
 
+            // Extract endpoints
+            if (specification.Paths != null)
+            {
+                foreach (var path in specification.Paths)
+                {
+                    foreach (var operation in path.Value.Operations)
+                    {
+                        try
+                        {
+                            var endpoint = ExtractEndpoint(path.Key, operation.Key, operation.Value, specification);
+                            if (endpoint != null)
+                            {
+                                endpoints.Add(endpoint);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            warnings.Add($"Failed to extract endpoint '{operation.Key} {path.Key}': {ex.Message}");
+                        }
+                    }
+                }
+            }
+
+            var serviceMetadata = new ServiceMetadata
+            {
+                Name = specification.Info?.Title ?? "Unnamed Service",
+                Version = specification.Info?.Version,
+                Description = specification.Info?.Description,
+                DataTypes = dataTypes,
+                Models = models,
+                Endpoints = endpoints
+            };
+
             return new MetadataExtractionResult
             {
                 DataTypes = dataTypes,
                 Models = models,
+                Endpoints = endpoints,
+                ServiceMetadata = serviceMetadata,
                 Warnings = warnings
             };
         }
@@ -299,6 +379,197 @@ namespace Polydigm.Specifications.OpenApi
                 return ModelKind.Event;
 
             return ModelKind.Entity;
+        }
+
+        private IEndpointMetadata? ExtractEndpoint(
+            string path,
+            Microsoft.OpenApi.Models.OperationType httpMethod,
+            OpenApiOperation operation,
+            OpenApiDocument document)
+        {
+            var name = operation.OperationId ?? $"{httpMethod}{path.Replace("/", "_").Replace("{", "").Replace("}", "")}";
+            var inputs = new List<IInputParameter>();
+            var outputs = new List<IOutputResponse>();
+
+            // Extract parameters
+            if (operation.Parameters != null)
+            {
+                foreach (var parameter in operation.Parameters)
+                {
+                    var parameterKind = MapParameterLocation(parameter.In);
+                    var dataType = parameter.Schema != null
+                        ? ResolvePropertyType(parameter.Schema, document)
+                        : null;
+
+                    if (dataType != null)
+                    {
+                        inputs.Add(new InputParameter
+                        {
+                            Name = parameter.Name,
+                            DataType = dataType,
+                            IsRequired = parameter.Required,
+                            Kind = parameterKind,
+                            Description = parameter.Description,
+                            DefaultValue = parameter.Schema?.Default
+                        });
+                    }
+                }
+            }
+
+            // Extract request body
+            if (operation.RequestBody != null)
+            {
+                var requestBodyType = ExtractRequestBodyType(operation.RequestBody, document);
+                if (requestBodyType != null)
+                {
+                    inputs.Add(new InputParameter
+                    {
+                        Name = "body",
+                        DataType = requestBodyType,
+                        IsRequired = operation.RequestBody.Required,
+                        Kind = InputParameterKind.Body,
+                        Description = operation.RequestBody.Description
+                    });
+                }
+            }
+
+            // Extract responses
+            if (operation.Responses != null)
+            {
+                foreach (var response in operation.Responses)
+                {
+                    var statusCode = response.Key;
+                    var responseType = ExtractResponseType(response.Value, document);
+                    var outputKind = DetermineOutputKind(statusCode);
+
+                    outputs.Add(new OutputResponse
+                    {
+                        Name = statusCode,
+                        Description = response.Value.Description,
+                        DataType = responseType,
+                        Kind = outputKind,
+                        Extensions = new Dictionary<string, object>
+                        {
+                            ["http-status-code"] = statusCode
+                        }
+                    });
+                }
+            }
+
+            // Determine operation semantics
+            var semantics = new EndpointSemantics
+            {
+                Intent = MapHttpMethodToIntent(httpMethod),
+                IsIdempotent = IsIdempotentHttpMethod(httpMethod),
+                IsSafe = IsSafeHttpMethod(httpMethod),
+                RequiresAuthentication = operation.Security?.Any() == true,
+                IsDeprecated = operation.Deprecated,
+                Tags = operation.Tags?.Select(t => t.Name).ToList() ?? new List<string>()
+            };
+
+            return new EndpointMetadata
+            {
+                Name = name,
+                Path = path, // Use HTTP path as canonical endpoint address
+                Description = operation.Summary ?? operation.Description,
+                Inputs = inputs,
+                Outputs = outputs,
+                Semantics = semantics,
+                Extensions = new Dictionary<string, object>
+                {
+                    ["http-method"] = httpMethod.ToString(),
+                    ["http-path"] = path
+                }
+            };
+        }
+
+        private InputParameterKind MapParameterLocation(Microsoft.OpenApi.Models.ParameterLocation? location)
+        {
+            return location switch
+            {
+                Microsoft.OpenApi.Models.ParameterLocation.Path => InputParameterKind.Path,
+                Microsoft.OpenApi.Models.ParameterLocation.Query => InputParameterKind.Query,
+                Microsoft.OpenApi.Models.ParameterLocation.Header => InputParameterKind.Header,
+                Microsoft.OpenApi.Models.ParameterLocation.Cookie => InputParameterKind.Header,
+                _ => InputParameterKind.Unspecified
+            };
+        }
+
+        private IDataType? ExtractRequestBodyType(OpenApiRequestBody requestBody, OpenApiDocument document)
+        {
+            // Try to get JSON content type first
+            if (requestBody.Content?.TryGetValue("application/json", out var mediaType) == true ||
+                requestBody.Content?.Values.FirstOrDefault() is { } firstMediaType && (mediaType = firstMediaType) != null)
+            {
+                if (mediaType.Schema != null)
+                {
+                    return ResolvePropertyType(mediaType.Schema, document);
+                }
+            }
+
+            return null;
+        }
+
+        private IDataType? ExtractResponseType(OpenApiResponse response, OpenApiDocument document)
+        {
+            // Try to get JSON content type first
+            if (response.Content?.TryGetValue("application/json", out var mediaType) == true ||
+                response.Content?.Values.FirstOrDefault() is { } firstMediaType && (mediaType = firstMediaType) != null)
+            {
+                if (mediaType.Schema != null)
+                {
+                    return ResolvePropertyType(mediaType.Schema, document);
+                }
+            }
+
+            return null;
+        }
+
+        private OutputKind DetermineOutputKind(string statusCode)
+        {
+            if (statusCode.StartsWith("2"))
+                return OutputKind.Success;
+            if (statusCode.StartsWith("3"))
+                return OutputKind.Redirect;
+            if (statusCode.StartsWith("4"))
+                return OutputKind.ClientError;
+            if (statusCode.StartsWith("5"))
+                return OutputKind.ServerError;
+            if (statusCode.StartsWith("1"))
+                return OutputKind.Informational;
+
+            return OutputKind.Success;
+        }
+
+        private OperationIntent MapHttpMethodToIntent(Microsoft.OpenApi.Models.OperationType httpMethod)
+        {
+            return httpMethod switch
+            {
+                Microsoft.OpenApi.Models.OperationType.Get => OperationIntent.Query,
+                Microsoft.OpenApi.Models.OperationType.Post => OperationIntent.Create,
+                Microsoft.OpenApi.Models.OperationType.Put => OperationIntent.Update,
+                Microsoft.OpenApi.Models.OperationType.Patch => OperationIntent.Update,
+                Microsoft.OpenApi.Models.OperationType.Delete => OperationIntent.Delete,
+                _ => OperationIntent.Action
+            };
+        }
+
+        private bool IsIdempotentHttpMethod(Microsoft.OpenApi.Models.OperationType httpMethod)
+        {
+            return httpMethod is
+                Microsoft.OpenApi.Models.OperationType.Get or
+                Microsoft.OpenApi.Models.OperationType.Put or
+                Microsoft.OpenApi.Models.OperationType.Delete or
+                Microsoft.OpenApi.Models.OperationType.Head or
+                Microsoft.OpenApi.Models.OperationType.Options;
+        }
+
+        private bool IsSafeHttpMethod(Microsoft.OpenApi.Models.OperationType httpMethod)
+        {
+            return httpMethod is
+                Microsoft.OpenApi.Models.OperationType.Get or
+                Microsoft.OpenApi.Models.OperationType.Head or
+                Microsoft.OpenApi.Models.OperationType.Options;
         }
     }
 }

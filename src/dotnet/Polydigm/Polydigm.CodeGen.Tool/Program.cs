@@ -95,6 +95,7 @@ class Program
 
             Console.WriteLine($"✅ Found {metadata.DataTypes.Count} data types");
             Console.WriteLine($"✅ Found {metadata.Models.Count} models");
+            Console.WriteLine($"✅ Found {metadata.Endpoints.Count} endpoints");
 
             if (metadata.Warnings.Count > 0)
             {

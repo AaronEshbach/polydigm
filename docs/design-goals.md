@@ -49,6 +49,16 @@ The Polydigm Framework is intended as a platform for building modern, service-or
 - Facilitate the use of different protocols, platforms, and persistence layers interchangeably so that application services are not tightly coupled to a specific technology.
 - Utilize the most powerful features of modern languages, from the type systems to source generators, to enable developers to achieve robust implementations of application features with minimal overhead, both during development and at runtime.
 
+## Designed with AI in-mind
+
+- Enable consistent and repeatable code generation with tools that can be easily leveraged by AI agents.
+- Decouple architectural design and platform choices from code generation, so that agents can write code without assuming a specific platform and without baking in any architectural choices that can be isolated from the application layer.
+- Leverage the type system of the supported languages to the fullest extent possible:
+    - Enforce validation/invariant constraints using the type system wherever possible.
+    - Make runtime errors with incompatible data into compiler errors the AI can detect and fix during a build.
+    - Facilitate human review of AI-generated code by clearly defining specific types for each unit of data (field-level data types).
+- Make it easier to observe runtime behavior of the application by having every request be fully audited and traced automatically
+
 ## Framework Features
 
 - Metadata Service
@@ -81,6 +91,14 @@ The Polydigm Framework is intended as a platform for building modern, service-or
         - AMQP
         - WebHooks
         - Web Sockets
+- Persistence/Repository Abstraction
+    - Enable the underlying data persistence for the application to be decoupled from the application layer, allowing the database to replaced without impact to the rest of the application.
+        - Enable unit testing without a physical database
+        - Enable different database technologies to be leveraged with the same repository patterns
+            - SQL
+            - MongoDB
+            - Redis
+            - etc.
 - Serialization
     - Allow the serialization to be controlled by the protocol or by the client, depending upon the protocol requirements
         - JSON

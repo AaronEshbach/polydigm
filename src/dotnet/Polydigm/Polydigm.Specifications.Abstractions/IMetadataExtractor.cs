@@ -3,7 +3,7 @@ using Polydigm.Metadata;
 namespace Polydigm.Specifications
 {
     /// <summary>
-    /// Extracts Polydigm metadata (IDataType, IModelMetadata) from a parsed specification.
+    /// Extracts Polydigm metadata (IDataType, IModelMetadata, IEndpointMetadata) from a parsed specification.
     /// This is the bridge between specification formats and Polydigm's metadata model.
     /// </summary>
     /// <typeparam name="TSpec">The type representing the parsed specification structure.</typeparam>
@@ -24,7 +24,21 @@ namespace Polydigm.Specifications
         IEnumerable<IModelMetadata> ExtractModels(TSpec specification);
 
         /// <summary>
-        /// Extracts all metadata (both data types and models) from a specification.
+        /// Extracts all endpoints from a specification.
+        /// </summary>
+        /// <param name="specification">The parsed specification.</param>
+        /// <returns>All endpoints defined in the specification.</returns>
+        IEnumerable<IEndpointMetadata> ExtractEndpoints(TSpec specification);
+
+        /// <summary>
+        /// Extracts complete service metadata from a specification.
+        /// </summary>
+        /// <param name="specification">The parsed specification.</param>
+        /// <returns>Service metadata including all types, models, and endpoints.</returns>
+        IServiceMetadata ExtractServiceMetadata(TSpec specification);
+
+        /// <summary>
+        /// Extracts all metadata (data types, models, and endpoints) from a specification.
         /// </summary>
         /// <param name="specification">The parsed specification.</param>
         /// <returns>Complete metadata extraction result.</returns>
@@ -38,6 +52,8 @@ namespace Polydigm.Specifications
     {
         public IReadOnlyList<IDataType> DataTypes { get; init; } = Array.Empty<IDataType>();
         public IReadOnlyList<IModelMetadata> Models { get; init; } = Array.Empty<IModelMetadata>();
+        public IReadOnlyList<IEndpointMetadata> Endpoints { get; init; } = Array.Empty<IEndpointMetadata>();
+        public IServiceMetadata? ServiceMetadata { get; init; }
         public IReadOnlyList<string> Warnings { get; init; } = Array.Empty<string>();
 
         /// <summary>
@@ -54,6 +70,9 @@ namespace Polydigm.Specifications
             {
                 metadataService.RegisterModel(model);
             }
+
+            // Note: Endpoints are typically not registered with the metadata service
+            // as they are handled separately by the service implementation layer
         }
     }
 
