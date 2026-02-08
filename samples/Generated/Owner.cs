@@ -11,30 +11,30 @@ namespace PetStore.Models
         /// <summary>
         /// Unique identifier for an owner
         /// </summary>
-        public required OwnerId id { get; init; }
+        public required OwnerId Id { get; init; }
 
         /// <summary>
         /// Email address
         /// </summary>
-        public required Email email { get; init; }
+        public required Email Email { get; init; }
 
         /// <summary>
         /// Name of the pet
         /// </summary>
-        public PetName name { get; init; }
+        public PetName Name { get; init; }
 
         public static bool TryCreate(PetStore.Models.DTO.Owner dto, out Owner? validated)
         {
             if (
-        OwnerId.TryCreate(dto.id, out var id) &&
-        Email.TryCreate(dto.email, out var email) &&
-        PetName.TryCreate(dto.name, out var name))
+        OwnerId.TryCreate(dto.Id, out var id) &&
+        Email.TryCreate(dto.Email, out var email) &&
+        PetName.TryCreate(dto.Name, out var name))
             {
                 validated = new Owner
                 {
-                    id = id,
-                    email = email,
-                    name = name,
+                    Id = id,
+                    Email = email,
+                    Name = name,
                 };
 
                 return true;
@@ -49,9 +49,9 @@ namespace PetStore.Models
         {
             return new Owner
             {
-                id = OwnerId.Create(dto.id),
-                email = Email.Create(dto.email),
-                name = PetName.Create(dto.name),
+                Id = OwnerId.Create(dto.Id),
+                Email = Email.Create(dto.Email),
+                Name = PetName.Create(dto.Name),
             };
         }
 
@@ -59,9 +59,9 @@ namespace PetStore.Models
         {
             return new PetStore.Models.DTO.Owner
             {
-                id = model.id.Value,
-                email = model.email.Value,
-                name = model.name.Value,
+                Id = model.Id.Value,
+                Email = model.Email.Value,
+                Name = model.Name.Value,
             };
         }
     }

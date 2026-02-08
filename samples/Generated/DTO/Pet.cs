@@ -8,22 +8,22 @@ namespace PetStore.Models.DTO
         /// <summary>
         /// Unique identifier for a pet
         /// </summary>
-        public string? id { get; init; }
+        public string? Id { get; init; }
 
         /// <summary>
         /// Name of the pet
         /// </summary>
-        public string? name { get; init; }
+        public string? Name { get; init; }
 
         /// <summary>
         /// Type of pet
         /// </summary>
-        public string? type { get; init; }
+        public string? Type { get; init; }
 
         /// <summary>
         /// Age of the pet in years
         /// </summary>
-        public int? age { get; init; }
+        public int? Age { get; init; }
 
     }
 }

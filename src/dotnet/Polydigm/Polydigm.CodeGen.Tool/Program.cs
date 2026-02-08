@@ -109,6 +109,15 @@ class Program
 
             Console.WriteLine();
 
+            // Refine metadata for C# naming conventions
+            Console.WriteLine("🔧 Refining metadata for C# conventions...");
+            var refiner = new CSharpRefiner();
+            var input = GenerationInput.From(metadata.DataTypes, metadata.Models);
+            var refinedInput = refiner.RefineAll(input);
+
+            Console.WriteLine("✅ Applied PascalCase naming conventions");
+            Console.WriteLine();
+
             // Generate C# code
             var generator = new CSharpCodeGenerator();
             var options = new CodeGenerationOptions
@@ -123,8 +132,7 @@ class Program
 
             Console.WriteLine("⚙️  Generating C# code...");
 
-            var input = GenerationInput.From(metadata.DataTypes, metadata.Models);
-            var artifacts = generator.GenerateAll(input, options);
+            var artifacts = generator.GenerateAll(refinedInput, options);
 
             // Create output directory
             if (!outputDir.Exists)
