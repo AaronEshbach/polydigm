@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- ASP.NET Core only runs on .NET Core/.NET 5+, not netstandard -->
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Polydigm.Metadata.Abstractions\Polydigm.Metadata.Abstractions.csproj" />
+		<ProjectReference Include="..\Polydigm.Pipeline.Abstractions\Polydigm.Pipeline.Abstractions.csproj" />
+		<ProjectReference Include="..\Polydigm.Pipeline\Polydigm.Pipeline.csproj" />
+		<ProjectReference Include="..\Polydigm.Validation.Abstractions\Polydigm.Validation.Abstractions.csproj" />
+		<ProjectReference Include="..\Polydigm.Validation\Polydigm.Validation.csproj" />
+	</ItemGroup>
+
+</Project>

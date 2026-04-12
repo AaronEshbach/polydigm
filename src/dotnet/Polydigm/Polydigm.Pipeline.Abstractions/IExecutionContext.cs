@@ -83,8 +83,9 @@ namespace Polydigm.Pipeline
 
     /// <summary>
     /// Base implementation of IExecutionContext.
+    /// Named ServiceExecutionContext to avoid collision with System.Threading.ExecutionContext.
     /// </summary>
-    public class ExecutionContext : IExecutionContext
+    public class ServiceExecutionContext : IExecutionContext
     {
         public IServiceRequest Request { get; set; } = null!;
         public IServiceResponse Response { get; set; } = new ServiceResponse();
