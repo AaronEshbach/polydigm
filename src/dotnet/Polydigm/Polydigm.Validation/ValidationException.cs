@@ -8,17 +8,27 @@ namespace Polydigm.Validation
         public const string ErrorType = "Validation_Error";
     }
 
-    public class ValidationException<T>(string name, string message, T value, Exception? innerException = null)
+    public class ValidationException<TModel>(string name, string message, Exception? innerException = null)
         : ValidationException(name, message, innerException)
     {
-        public T Value => value;
+        public ValidationException(string message, Exception? innerException = null) : this(
+            name: $"Invalid_{typeof(TModel).Name}",
+            message: message,
+            innerException: innerException)
+        {
+        }
     }
 
-    public class ValidationException<TPrimitive, TValidated> : ValidationException<TPrimitive>
+    public class ValidationException<TPrimitive, TValidated> : ValidationException<TValidated>
     {
+        private readonly TPrimitive value;
+
+        public TPrimitive Value => value;
+
         public ValidationException(string name, string message, TPrimitive value, Exception? innerException = null)
-            : base(name, message, value, innerException)
+            : base(name, message, innerException)
         {
+            this.value = value;
         }
 
         public ValidationException(TPrimitive value) : this(
@@ -27,5 +37,25 @@ namespace Polydigm.Validation
             value: value)
         {
         }
+    }
+
+    public class AggregateValidationException(IEnumerable<ValidationException> innerExceptions) 
+        : ValidationException(
+            name: innerExceptions.Select(e => e.Name).SingleOrDefault() ?? "Multiple_Validation_Errors",
+            message: string.Join(" | ", innerExceptions.Select(e => e.Message)),
+            innerException: innerExceptions.FirstOrDefault()
+         )
+    {
+        public IEnumerable<ValidationException> InnerExceptions => innerExceptions;
+    }
+
+    public class AggregateValidationException<TModel>(IEnumerable<ValidationException<TModel>> innerExceptions)
+        : ValidationException(
+            name: innerExceptions.Select(e => e.Name).SingleOrDefault() ?? $"Invalid_{typeof(TModel).Name}",
+            message: string.Join(" | ", innerExceptions.Select(e => e.Message)),
+            innerException: innerExceptions.FirstOrDefault()
+         )
+    {
+        public IEnumerable<ValidationException> InnerExceptions => innerExceptions;
     }
 }

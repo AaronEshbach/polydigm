@@ -246,12 +246,40 @@ namespace Polydigm.Hosting.AspNetCore
         }
 
         /// <summary>
-        /// Calls the static TryCreate(string, out T) method on a [Validated] type.
-        /// Throws ValidationException if the type doesn't have such a method or if validation fails.
+        /// Calls the static Validate(string) → ValidationResult&lt;T&gt; method on a [Validated] type
+        /// to bind a parameter value. The Validate method is preferred because it carries the
+        /// specific error message from the throwing Create method via the Invalid result.
+        ///
+        /// Falls back to the old TryCreate(string, out T) → bool pattern for types that have
+        /// not yet adopted the new Validate convention.
         /// </summary>
         private static object? InvokeValidatedTryCreate(string raw, Type validatedType, string paramName)
         {
-            // Find static TryCreate(string?, out TValidated) → bool
+            // Prefer Validate(string) → IValidationResult (richer error info)
+            var validateMethod = validatedType
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .FirstOrDefault(m =>
+                    m.Name == "Validate" &&
+                    m.GetParameters().Length == 1 &&
+                    typeof(IValidationResult).IsAssignableFrom(m.ReturnType));
+
+            if (validateMethod is not null)
+            {
+                var result = validateMethod.Invoke(null, [raw]) as IValidationResult;
+                if (result is null)
+                    throw new InvalidOperationException(
+                        $"Validate on '{validatedType.Name}' returned null.");
+
+                if (!result.IsValid)
+                    throw new ValidationException(
+                        $"Invalid_{validatedType.Name}",
+                        result.ErrorMessage ?? $"The value '{raw}' is not a valid {validatedType.Name}.",
+                        result.Exception);
+
+                return result.UntypedModel;
+            }
+
+            // Fallback: TryCreate(string, out T) → bool
             var tryCreate = validatedType
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .FirstOrDefault(m =>
@@ -263,7 +291,7 @@ namespace Polydigm.Hosting.AspNetCore
             if (tryCreate is null)
                 throw new InvalidOperationException(
                     $"Type '{validatedType.Name}' is decorated with [Validated] but has no " +
-                    $"static TryCreate(string, out {validatedType.Name}) method.");
+                    $"static Validate(string) or TryCreate(string, out {validatedType.Name}) method.");
 
             var args = new object?[] { raw, null };
             var success = (bool)tryCreate.Invoke(null, args)!;
@@ -273,7 +301,7 @@ namespace Polydigm.Hosting.AspNetCore
                     $"Invalid_{validatedType.Name}",
                     $"The value '{raw}' is not a valid {validatedType.Name}.");
 
-            return args[1]; // the out parameter holds the validated value
+            return args[1];
         }
     }
 }

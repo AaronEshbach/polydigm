@@ -1,8 +1,10 @@
-﻿using Polydigm.Metadata;
+using Polydigm.Metadata;
 using System.Text.RegularExpressions;
 
 namespace Polydigm.Validation.Tests
 {
+    // ── TestId ────────────────────────────────────────────────────────────────────
+
     [Validated]
     public readonly record struct TestId
     {
@@ -18,32 +20,46 @@ namespace Polydigm.Validation.Tests
             this.value = value;
         }
 
+        /// <summary>
+        /// Creates a validated TestId. Throws on invalid input — the authoritative
+        /// place for validation logic. All error specificity originates here.
+        /// </summary>
         [Validation]
-        public static bool TryCreate(string? input, out TestId validated)
-        {
-            if (input is not null && Pattern.IsMatch(input))
-            {
-                validated = new TestId(input);
-                return true;
-            }
-            
-            validated = default;
-            return false;
-        }
-
         public static TestId Create(string? input)
         {
-            if (TryCreate(input, out var validated))
-            {
-                return validated;
-            }
+            if (input is not null && Pattern.IsMatch(input))
+                return new TestId(input);
 
             throw new ValidationException<string?, TestId>(input);
         }
 
-        public override string ToString() => value;        
+        /// <summary>
+        /// Validates <paramref name="input"/> and returns a discriminated union result.
+        /// Callers that need error details without catching exceptions use this method.
+        /// </summary>
+        public static ValidationResult<TestId> Validate(string? input)
+            => Validator.Try(Create, input);
+
+        /// <summary>
+        /// Convenience bool-returning variant, derived from <see cref="Validate"/>.
+        /// </summary>
+        public static bool TryCreate(string? input, out TestId validated)
+        {
+            var result = Validate(input);
+            if (result is ValidatedResult<TestId>.Valid valid)
+            {
+                validated = valid.Model;
+                return true;
+            }
+
+            validated = default;
+            return false;
+        }
+
+        public override string ToString() => value;
     }
 
+    // ── TestType ──────────────────────────────────────────────────────────────────
 
     [Validated]
     public readonly record struct TestType
@@ -65,11 +81,24 @@ namespace Polydigm.Validation.Tests
             this.value = value;
         }
 
-        public static bool TryCreate(string? input, out TestType validated)
+        [Validation]
+        public static TestType Create(string? input)
         {
             if (input is not null && Enum.TryParse<TestTypeEnum>(input, out var enumValue))
+                return new TestType(enumValue);
+
+            throw new ValidationException<string?, TestType>(input);
+        }
+
+        public static ValidationResult<TestType> Validate(string? input)
+            => Validator.Try(Create, input);
+
+        public static bool TryCreate(string? input, out TestType validated)
+        {
+            var result = Validate(input);
+            if (result is ValidatedResult<TestType>.Valid valid)
             {
-                validated = new TestType(enumValue);
+                validated = valid.Model;
                 return true;
             }
 
@@ -77,19 +106,10 @@ namespace Polydigm.Validation.Tests
             return false;
         }
 
-        [Validation]
-        public static TestType Create(string? input)
-        {
-            if (TryCreate(input, out var validated))
-            {
-                return validated;
-            }
-
-            throw new ValidationException<string?, TestId>(input);
-        }
-
         public override string ToString() => Enum.GetName(value) ?? $"{value}";
     }
+
+    // ── TestName ──────────────────────────────────────────────────────────────────
 
     [Validated]
     public readonly record struct TestName
@@ -109,29 +129,35 @@ namespace Polydigm.Validation.Tests
             this.value = value;
         }
 
-        public static bool TryCreate(string? input, out TestName validated)
+        [Validation]
+        public static TestName Create(string? input)
         {
             if (!string.IsNullOrWhiteSpace(input) && input.Length <= MaxLength)
+                return new TestName(input);
+
+            throw new ValidationException<string?, TestName>(input);
+        }
+
+        public static ValidationResult<TestName> Validate(string? input)
+            => Validator.Try(Create, input);
+
+        public static bool TryCreate(string? input, out TestName validated)
+        {
+            var result = Validate(input);
+            if (result is ValidatedResult<TestName>.Valid valid)
             {
-                validated = new TestName(input);
+                validated = valid.Model;
                 return true;
             }
+
             validated = default;
             return false;
         }
 
-        [Validation]
-        public static TestName Create(string? input)
-        {
-            if (TryCreate(input, out var validated))
-            {
-                return validated;
-            }
-            throw new ValidationException<string?, TestId>(input);
-        }
-
         public override string ToString() => value;
     }
+
+    // ── TestModel (complex — validated from a DTO) ────────────────────────────────
 
     [Validated(typeof(DTO.TestModel))]
     public sealed record TestModel
@@ -140,19 +166,31 @@ namespace Polydigm.Validation.Tests
         public required TestType Type { get; init; }
         public required TestName Name { get; init; }
 
+        /// <summary>
+        /// Creates a validated TestModel from an unvalidated DTO.
+        /// Each field delegation call throws its own ValidationException on failure,
+        /// which propagates out so callers can use Validate() to capture it.
+        /// </summary>
+        [Validation]
+        public static TestModel Create(DTO.TestModel dto)
+        {
+            return new TestModel
+            {
+                Id   = TestId.Create(dto.Id),
+                Type = TestType.Create(dto.Type),
+                Name = TestName.Create(dto.Name)
+            };
+        }
+
+        public static ValidationResult<TestModel> Validate(DTO.TestModel dto)
+            => Validator.Try(Create, dto);
+
         public static bool TryCreate(DTO.TestModel dto, out TestModel? validated)
         {
-            if (TestId.TryCreate(dto.Id, out var id) &&
-                TestType.TryCreate(dto.Type, out var type) &&
-                TestName.TryCreate(dto.Name, out var name))
+            var result = Validate(dto);
+            if (result is ValidatedResult<TestModel>.Valid valid)
             {
-                validated = new TestModel
-                {
-                    Id = id,
-                    Type = type,
-                    Name = name
-                };
-
+                validated = valid.Model;
                 return true;
             }
 
@@ -160,22 +198,11 @@ namespace Polydigm.Validation.Tests
             return false;
         }
 
-        [Validation]
-        public static TestModel Create(DTO.TestModel dto)
-        {
-            return new TestModel
-            {
-                Id = TestId.Create(dto.Id),
-                Type = TestType.Create(dto.Type),
-                Name = TestName.Create(dto.Name)
-            };
-        }
-
         public static DTO.TestModel ToDTO(TestModel model)
         {
             return new DTO.TestModel
             {
-                Id = model.Id.Value,
+                Id   = model.Id.Value,
                 Type = model.Type.ToString(),
                 Name = model.Name.Value
             };

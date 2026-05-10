@@ -5,21 +5,22 @@ namespace Polydigm.Sample.WebApi.Models
 {
     /// <summary>
     /// A validated description string for an item.
-    /// Ensures the value is non-empty and within the allowed length.
     ///
-    /// Following the Polydigm validated-primitive pattern:
-    ///   - Private constructor — can only be created via TryCreate / Create.
-    ///   - Static TryCreate discovered by the parameter binder for automatic query-string validation.
-    ///   - If the query string value fails validation the pipeline returns 400 automatically.
+    /// Follows the Polydigm validated-primitive pattern:
+    ///   Create    — throws ValidationException; is the authoritative source of error specificity.
+    ///   Validate  — wraps Create via Validation.Try; returns a discriminated union result.
+    ///   TryCreate — derived from Validate; classic bool-returning variant for convenience.
+    ///   FromOptional — helper for optional query string parameters; returns null on empty input.
+    ///
+    /// The parameter binder in ServiceDiscovery discovers Validate via reflection and calls
+    /// it automatically for [Validated] parameters, propagating the specific error message
+    /// from Create as a 400 response when validation fails.
     /// </summary>
     [Validated]
     public readonly record struct ItemDescription
     {
         [MaxLength]
         private const int MaxLength = 200;
-
-        [Required]
-        private const bool IsRequired = true;
 
         private readonly string value;
 
@@ -30,11 +31,24 @@ namespace Polydigm.Sample.WebApi.Models
             this.value = value;
         }
 
-        public static bool TryCreate(string? input, out ItemDescription validated)
+        [Validation]
+        public static ItemDescription Create(string input)
         {
-            if (!string.IsNullOrWhiteSpace(input) && input.Length <= MaxLength)
+            if (input.Length > MaxLength)
+                throw new ValidationException<string, ItemDescription>(input);
+
+            return new ItemDescription(input);
+        }
+
+        public static ValidationResult<ItemDescription> Validate(string input)
+            => Validator.Try(Create, input);
+
+        public static bool TryCreate(string input, out ItemDescription validated)
+        {
+            var result = Validate(input);
+            if (result is ValidatedResult<ItemDescription>.Valid valid)
             {
-                validated = new ItemDescription(input);
+                validated = valid.Model;
                 return true;
             }
 
@@ -42,13 +56,16 @@ namespace Polydigm.Sample.WebApi.Models
             return false;
         }
 
-        [Validation]
-        public static ItemDescription Create(string? input)
+        /// <summary>
+        /// Returns null when <paramref name="input"/> is null or empty, otherwise Creates.
+        /// Use this for optional query string parameters.
+        /// </summary>
+        public static ItemDescription? FromOptional(string? input = null)
         {
-            if (TryCreate(input, out var validated))
-                return validated;
+            if (string.IsNullOrEmpty(input))
+                return null;
 
-            throw new ValidationException<string?, ItemDescription>(input);
+            return Create(input);
         }
 
         public override string ToString() => value;
