@@ -19,6 +19,22 @@ namespace Polydigm.Validation
         Exception? Exception { get; }
     }
 
+    public class ValidationResult : IValidationResult
+    {
+        public bool IsValid { get; }
+        public object? UntypedModel { get; }
+        public Exception? Exception { get; }
+
+        public string? ErrorMessage => Exception?.Message;
+
+        public ValidationResult(bool isValid, object? model = null, Exception? exception = null)
+        {
+            IsValid = isValid;
+            UntypedModel = model;
+            Exception = exception;
+        }
+    }
+
     /// <summary>
     /// A discriminated union representing the outcome of validating an input value.
     ///
