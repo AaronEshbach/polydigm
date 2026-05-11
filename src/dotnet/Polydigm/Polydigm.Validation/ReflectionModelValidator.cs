@@ -112,6 +112,11 @@ namespace Polydigm.Validation
             return (TPrimitive)extractor.GetValue(validatedModel!);
         }
 
+        /// <summary>
+        /// Generic entry point for compile-time-typed callers.
+        /// Discovers the validation method on <typeparamref name="TModel"/> via reflection,
+        /// invokes it with <paramref name="unvalidatedValue"/>, and returns a typed result.
+        /// </summary>
         public ValidationResult<TModel> Validate<TPrimitive, TModel>(TPrimitive unvalidatedValue)
         {
             var validator = primitiveValidators.GetOrAdd(typeof(TModel), modelType => new PrimitiveValidator(modelType, typeof(TPrimitive)));
@@ -129,6 +134,21 @@ namespace Polydigm.Validation
 
                 return new ValidatedResult<TModel>.Invalid(new ValidationException<TPrimitive, TModel>($"{typeof(TModel).Name}_Validation_Error", result.ErrorMessage ?? "Validation failed without a specific error message.", unvalidatedValue, result.Exception));
             }
+        }
+
+        /// <summary>
+        /// Non-generic entry point for infrastructure callers (e.g. service discovery parameter
+        /// binding) that know <paramref name="primitiveType"/> and <paramref name="modelType"/>
+        /// only at runtime.
+        ///
+        /// Returns a non-generic <see cref="IValidationResult"/> so the caller can read
+        /// <see cref="IValidationResult.UntypedModel"/> and
+        /// <see cref="IValidationResult.ErrorMessage"/> without needing the concrete type.
+        /// </summary>
+        public static IValidationResult Validate(object? unvalidatedValue, Type primitiveType, Type modelType)
+        {
+            var validator = primitiveValidators.GetOrAdd(modelType, mt => new PrimitiveValidator(mt, primitiveType));
+            return validator.Validate(unvalidatedValue!);
         }
     }
 }

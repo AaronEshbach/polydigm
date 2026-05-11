@@ -24,7 +24,6 @@ namespace Polydigm.Validation.Tests
         /// Creates a validated TestId. Throws on invalid input — the authoritative
         /// place for validation logic. All error specificity originates here.
         /// </summary>
-        [Validation]
         public static TestId Create(string? input)
         {
             if (input is not null && Pattern.IsMatch(input))
@@ -36,7 +35,9 @@ namespace Polydigm.Validation.Tests
         /// <summary>
         /// Validates <paramref name="input"/> and returns a discriminated union result.
         /// Callers that need error details without catching exceptions use this method.
+        /// Preferred over Create for infrastructure callers (e.g. parameter binders).
         /// </summary>
+        [Validation]
         public static ValidationResult<TestId> Validate(string? input)
             => Validator.Try(Create, input);
 
@@ -81,7 +82,6 @@ namespace Polydigm.Validation.Tests
             this.value = value;
         }
 
-        [Validation]
         public static TestType Create(string? input)
         {
             if (input is not null && Enum.TryParse<TestTypeEnum>(input, out var enumValue))
@@ -90,6 +90,7 @@ namespace Polydigm.Validation.Tests
             throw new ValidationException<string?, TestType>(input);
         }
 
+        [Validation]
         public static ValidationResult<TestType> Validate(string? input)
             => Validator.Try(Create, input);
 
@@ -129,7 +130,6 @@ namespace Polydigm.Validation.Tests
             this.value = value;
         }
 
-        [Validation]
         public static TestName Create(string? input)
         {
             if (!string.IsNullOrWhiteSpace(input) && input.Length <= MaxLength)
@@ -138,6 +138,7 @@ namespace Polydigm.Validation.Tests
             throw new ValidationException<string?, TestName>(input);
         }
 
+        [Validation]
         public static ValidationResult<TestName> Validate(string? input)
             => Validator.Try(Create, input);
 
@@ -171,7 +172,6 @@ namespace Polydigm.Validation.Tests
         /// Each field delegation call throws its own ValidationException on failure,
         /// which propagates out so callers can use Validate() to capture it.
         /// </summary>
-        [Validation]
         public static TestModel Create(DTO.TestModel dto)
         {
             return new TestModel
@@ -182,6 +182,7 @@ namespace Polydigm.Validation.Tests
             };
         }
 
+        [Validation]
         public static ValidationResult<TestModel> Validate(DTO.TestModel dto)
             => Validator.Try(Create, dto);
 

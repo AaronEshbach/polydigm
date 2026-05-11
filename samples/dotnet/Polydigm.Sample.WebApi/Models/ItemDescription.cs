@@ -31,7 +31,6 @@ namespace Polydigm.Sample.WebApi.Models
             this.value = value;
         }
 
-        [Validation]
         public static ItemDescription Create(string input)
         {
             if (input.Length > MaxLength)
@@ -40,6 +39,7 @@ namespace Polydigm.Sample.WebApi.Models
             return new ItemDescription(input);
         }
 
+        [Validation]
         public static ValidationResult<ItemDescription> Validate(string input)
             => Validator.Try(Create, input);
 

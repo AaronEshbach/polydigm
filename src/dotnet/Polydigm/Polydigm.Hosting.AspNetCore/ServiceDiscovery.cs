@@ -222,7 +222,7 @@ namespace Polydigm.Hosting.AspNetCore
             string raw, Type targetType, ValidatedAttribute? validatedAttr, string paramName)
         {
             if (validatedAttr is not null)
-                return InvokeValidatedTryCreate(raw, targetType, paramName);
+                return InvokeValidatedModel(raw, targetType, paramName);
 
             if (targetType == typeof(string))
                 return raw;
@@ -230,7 +230,6 @@ namespace Polydigm.Hosting.AspNetCore
             if (targetType.IsEnum)
                 return Enum.Parse(targetType, raw, ignoreCase: true);
 
-            // Use TypeDescriptor/IConvertible for common primitives
             try
             {
                 return Convert.ChangeType(raw, targetType,
@@ -246,62 +245,24 @@ namespace Polydigm.Hosting.AspNetCore
         }
 
         /// <summary>
-        /// Calls the static Validate(string) → ValidationResult&lt;T&gt; method on a [Validated] type
-        /// to bind a parameter value. The Validate method is preferred because it carries the
-        /// specific error message from the throwing Create method via the Invalid result.
+        /// Delegates to <see cref="ReflectionModelValidator"/> to validate a query-string or
+        /// route parameter value against a <c>[Validated]</c> model type.
         ///
-        /// Falls back to the old TryCreate(string, out T) → bool pattern for types that have
-        /// not yet adopted the new Validate convention.
+        /// ReflectionModelValidator prefers the <c>[Validation]</c>-attributed method
+        /// (expected to be <c>Validate</c>) and falls back to any static method that accepts
+        /// a <c>string</c> and returns either an <c>IValidationResult</c> or the model type.
         /// </summary>
-        private static object? InvokeValidatedTryCreate(string raw, Type validatedType, string paramName)
+        private static object? InvokeValidatedModel(string raw, Type validatedType, string paramName)
         {
-            // Prefer Validate(string) → IValidationResult (richer error info)
-            var validateMethod = validatedType
-                .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(m =>
-                    m.Name == "Validate" &&
-                    m.GetParameters().Length == 1 &&
-                    typeof(IValidationResult).IsAssignableFrom(m.ReturnType));
+            var result = ReflectionModelValidator.Validate(raw, typeof(string), validatedType);
 
-            if (validateMethod is not null)
-            {
-                var result = validateMethod.Invoke(null, [raw]) as IValidationResult;
-                if (result is null)
-                    throw new InvalidOperationException(
-                        $"Validate on '{validatedType.Name}' returned null.");
-
-                if (!result.IsValid)
-                    throw new ValidationException(
-                        $"Invalid_{validatedType.Name}",
-                        result.ErrorMessage ?? $"The value '{raw}' is not a valid {validatedType.Name}.",
-                        result.Exception);
-
-                return result.UntypedModel;
-            }
-
-            // Fallback: TryCreate(string, out T) → bool
-            var tryCreate = validatedType
-                .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(m =>
-                    m.Name == "TryCreate" &&
-                    m.ReturnType == typeof(bool) &&
-                    m.GetParameters().Length == 2 &&
-                    m.GetParameters()[1].IsOut);
-
-            if (tryCreate is null)
-                throw new InvalidOperationException(
-                    $"Type '{validatedType.Name}' is decorated with [Validated] but has no " +
-                    $"static Validate(string) or TryCreate(string, out {validatedType.Name}) method.");
-
-            var args = new object?[] { raw, null };
-            var success = (bool)tryCreate.Invoke(null, args)!;
-
-            if (!success)
+            if (!result.IsValid)
                 throw new ValidationException(
                     $"Invalid_{validatedType.Name}",
-                    $"The value '{raw}' is not a valid {validatedType.Name}.");
+                    result.ErrorMessage ?? $"The value '{raw}' is not a valid {validatedType.Name}.",
+                    result.Exception);
 
-            return args[1];
+            return result.UntypedModel;
         }
     }
 }
